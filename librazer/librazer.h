@@ -210,6 +210,10 @@ enum razer_mouse_type {
 	RAZER_MOUSETYPE_TAIPAN,
 };
 
+enum razer_headset_type {
+	RAZER_HEADSETTYPE_KRAKEN,
+};
+
 /** struct razer_button_function - A logical button function
  *
  * @id: A unique ID number for the function.

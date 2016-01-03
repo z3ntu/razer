@@ -30,6 +30,7 @@
 #include "hw_boomslangce.h"
 #include "hw_imperator.h"
 #include "hw_taipan.h"
+#include "hw_kraken_chroma.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -42,6 +43,7 @@
 
 enum razer_devtype {
 	RAZER_DEVTYPE_MOUSE,
+	RAZER_DEVTYPE_HEADSET,
 };
 
 /** struct razer_mouse_base_ops - Basic device-init operations
@@ -58,12 +60,19 @@ struct razer_mouse_base_ops {
 	void (*release)(struct razer_mouse *m);
 };
 
+struct razer_headset_base_ops { //TODO: Change to razer_headset (create that)
+	enum razer_headset_type type;
+	int (*init)(struct razer_mouse *m, struct libusb_device *udev);
+	void (*release)(struct razer_mouse *m);
+};
+
 struct razer_usb_device {
 	uint16_t vendor;	/* Vendor ID */
 	uint16_t product;	/* Product ID */
 	enum razer_devtype type;
 	union {
 		const struct razer_mouse_base_ops *mouse_ops;
+		const struct razer_headset_base_ops *headset_ops;
 	} u;
 };
 
@@ -133,6 +142,12 @@ static const struct razer_mouse_base_ops razer_taipan_base_ops = {
 	.release		= razer_taipan_release,
 };
 
+static const struct razer_headset_base_ops razer_kraken_chroma_base_ops = {
+	.type			= RAZER_HEADSETTYPE_KRAKEN,
+	.init			= razer_kraken_chroma_init,
+	.release		= razer_kraken_chroma_release,
+};
+
 #define USBVENDOR_ANY	0xFFFF
 #define USBPRODUCT_ANY	0xFFFF
 
@@ -140,6 +155,11 @@ static const struct razer_mouse_base_ops razer_taipan_base_ops = {
 	{ .vendor = _vendor, .product = _product,	\
 	  .type = RAZER_DEVTYPE_MOUSE,			\
 	  .u = { .mouse_ops = _mouse_ops, }, }
+
+#define USB_HEADSET(_vendor, _product, _headset_ops)	\
+	{ .vendor = _vendor, .product = _product,	\
+	  .type = RAZER_DEVTYPE_HEADSET,			\
+	  .u.headset_ops = _headset_ops, }
 
 /* Table of supported USB devices. */
 static const struct razer_usb_device razer_usbdev_table[] = {
@@ -162,9 +182,11 @@ static const struct razer_usb_device razer_usbdev_table[] = {
 	USB_MOUSE(0x1532, 0x0005, &razer_boomslangce_base_ops),
 	USB_MOUSE(0x1532, 0x0017, &razer_imperator_base_ops),
 	USB_MOUSE(0x1532, 0x0034, &razer_taipan_base_ops),
+	USB_HEADSET(0x1532, 0x0504, &razer_kraken_chroma_base_ops),
 	{ 0, }, /* List end */
 };
 #undef USB_MOUSE
+#undef USB_HEADSET
 
 
 
